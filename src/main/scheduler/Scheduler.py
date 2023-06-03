@@ -1,6 +1,7 @@
 from model.Vaccine import Vaccine
 from model.Caregiver import Caregiver
 from model.Patient import Patient
+from model.Availabilities import get_availability
 from util.Util import Util
 from db.ConnectionManager import ConnectionManager
 import pymssql
@@ -204,10 +205,38 @@ def login_caregiver(tokens):
 
 
 def search_caregiver_schedule(tokens):
-    """
-    TODO: Part 2
-    """
-    pass
+    #  search_caregiver_schedule <date>
+    #  check 1: check if a user is logged in
+    if current_caregiver is None and current_patient is None:
+        print("Please login first!")
+        return
+    # check 2: the length for tokens need to be exactly 2 to include all information (with the operation name)
+    if len(tokens) != 2:
+        print("Input length is incorrect. Please try again!")
+        return
+    date = tokens[1]
+    date_tokens = date.split("-")
+    month = int(date_tokens[0])
+    day = int(date_tokens[1])
+    year = int(date_tokens[2])
+    caregivers_list = []
+    try:
+        d = datetime.datetime(year, month, day)
+        row_count = get_availability(d)
+        if row_count == 0:
+            print("Sorry! No caregiver/vaccine available for this date. Please choose a different date.")
+    except pymssql.Error as e:
+        print("Search_caregivers_schedule Failed")
+        print("Db-Error:", e)
+        quit()
+    except ValueError:
+        print("Please enter a valid date in MM-DD-YYYY format!")
+        return
+    except Exception as e:
+        print("Error occurred when searching for caregiver schedules. Please try again!")
+        print("Error:", e)
+        return
+    return
 
 
 def reserve(tokens):
@@ -244,7 +273,7 @@ def upload_availability(tokens):
         print("Db-Error:", e)
         quit()
     except ValueError:
-        print("Please enter a valid date!")
+        print("Please enter a valid date in MM-DD-YYYY format!")
         return
     except Exception as e:
         print("Error occurred when uploading availability")
