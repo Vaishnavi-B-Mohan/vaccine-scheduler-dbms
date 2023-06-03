@@ -64,4 +64,3 @@ class Patient:
             raise
         finally:
             cm.close_connection()
-

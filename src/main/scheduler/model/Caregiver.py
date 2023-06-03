@@ -81,3 +81,19 @@ class Caregiver:
             raise
         finally:
             cm.close_connection()
+
+    def remove_availability(self, d):
+        cm = ConnectionManager()
+        conn = cm.create_connection()
+        cursor = conn.cursor()
+
+        del_availability = "DELETE FROM Availabilities WHERE Time=%s AND Username=%s"
+        try:
+            cursor.execute(del_availability, (d, self.username))
+            # you must call commit() to persist your data if you don't set autocommit to True
+            conn.commit()
+        except pymssql.Error:
+            # print("Error occurred when updating caregiver availability")
+            raise
+        finally:
+            cm.close_connection()

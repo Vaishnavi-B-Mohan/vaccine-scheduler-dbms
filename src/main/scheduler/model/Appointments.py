@@ -1,8 +1,12 @@
 import sys
+import uuid
 sys.path.append("../db/*")
 from db.ConnectionManager import ConnectionManager
 import pymssql
 
+
+def createAppointmentID():
+    return str(uuid.uuid4())
 
 class Appointments:
     def __init__(self, appointmentID, patient, caregiver, vaccine, d):
@@ -19,7 +23,7 @@ class Appointments:
 
         get_vaccine = "SELECT AppointmentID, PatientID, CaregiverID, VaccineName, Time FROM Appointments WHERE AppointmentID = %s"
         try:
-            cursor.execute(get_vaccine, self.appointmentID)
+            row = cursor.execute(get_vaccine, self.appointmentID)
             for row in cursor:
                 self.patient = row['PatientID']
                 self.caregiver = row['CaregiverID']
@@ -33,7 +37,7 @@ class Appointments:
             cm.close_connection()
         return None
 
-    def get_appointment_details(self):
+    def get_appointmentID(self):
         return self.appointmentID
 
     def save_to_db(self):

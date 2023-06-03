@@ -25,7 +25,7 @@ CREATE TABLE Vaccines (
 );
 
 CREATE TABLE Appointments (
-    AppointmentID INT IDENTITY(1,1) NOT NULL,
+    AppointmentID varchar(255),
     PatientID varchar(255) REFERENCES Patients,
     CaregiverID varchar(255) REFERENCES Caregivers,
     VaccineName varchar(255) REFERENCES Vaccines,

@@ -1,7 +1,10 @@
 from model.Vaccine import Vaccine
 from model.Caregiver import Caregiver
 from model.Patient import Patient
-from model.Availabilities import get_availability
+from model.Appointments import Appointments
+from model.Appointments import createAppointmentID
+from model.Availabilities import check_availability
+from model.Availabilities import get_available_caregiver
 from util.Util import Util
 from db.ConnectionManager import ConnectionManager
 import pymssql
@@ -16,6 +19,8 @@ Note: it is always true that at most one of currentCaregiver and currentPatient 
 current_patient = None
 
 current_caregiver = None
+
+login_profile_name = None
 
 
 def create_patient(tokens):
@@ -136,6 +141,7 @@ def login_patient(tokens):
     # login_patient <username> <password>
     # check 1: if someone's already logged-in, they need to log out first
     global current_patient
+    global login_profile_name
     if current_patient is not None or current_caregiver is not None:
         print("User already logged in.")
         return
@@ -151,6 +157,7 @@ def login_patient(tokens):
     patient = None
     try:
         patient = Patient(username, password=password).get()
+        login_profile_name = username
     except pymssql.Error as e:
         print("Login failed.")
         print("Db-Error:", e)
@@ -172,6 +179,7 @@ def login_caregiver(tokens):
     # login_caregiver <username> <password>
     # check 1: if someone's already logged-in, they need to log out first
     global current_caregiver
+    global login_profile_name
     if current_caregiver is not None or current_patient is not None:
         print("User already logged in.")
         return
@@ -187,6 +195,7 @@ def login_caregiver(tokens):
     caregiver = None
     try:
         caregiver = Caregiver(username, password=password).get()
+        login_profile_name = username
     except pymssql.Error as e:
         print("Login failed.")
         print("Db-Error:", e)
@@ -219,10 +228,10 @@ def search_caregiver_schedule(tokens):
     month = int(date_tokens[0])
     day = int(date_tokens[1])
     year = int(date_tokens[2])
-    caregivers_list = []
+
     try:
         d = datetime.datetime(year, month, day)
-        row_count = get_availability(d)
+        row_count = check_availability(d)
         if row_count == 0:
             print("Sorry! No caregiver/vaccine available for this date. Please choose a different date.")
     except pymssql.Error as e:
@@ -240,11 +249,59 @@ def search_caregiver_schedule(tokens):
 
 
 def reserve(tokens):
-    """
-    TODO: Part 2
-    """
-    pass
+    #  reserve <date> <vaccine>
+    #  check 1: check if a patient is logged in
+    global current_patient
+    global login_profile_name
+    if current_caregiver is not None:
+        print("Please login as a patient!")
+    if current_patient is None and current_caregiver is None:
+        print("Please login first!")
+        return
+    # check 2: the length for tokens need to be exactly 3 to include all information (with the operation name)
+    if len(tokens) != 3:
+        print("Input length is incorrect. Please try again!")
+        return
 
+    date = tokens[1]
+    vaccinename = tokens[2]
+    date_tokens = date.split("-")
+    month = int(date_tokens[0])
+    day = int(date_tokens[1])
+    year = int(date_tokens[2])
+
+    try:
+        d = datetime.datetime(year, month, day)
+        availability = check_availability(d)
+        if availability <= 0:
+            print("Sorry no caregiver is available!")
+            return
+        available_doses = Vaccine(vaccinename).get_available_doses()
+        if available_doses <= 0:
+            print("Sorry not enough available doses!")
+            return
+
+        patient_name = login_profile_name
+        cg_name = get_available_caregiver(d, vaccinename)
+        appointmentID = createAppointmentID()
+        Appointments(appointmentID, patient_name, cg_name, vaccinename, d).save_to_db()
+        Vaccine(vaccinename).decrease_available_doses(1)  # decreasing the available doses by 1 after reservation
+        Caregiver(cg_name).remove_availability(d)  # remove caregiver availability from the Availabilities table after reservation
+        print("Your appointment has been reserved")
+        print("Appointment ID: ", appointmentID, "Caregiver username: ", cg_name)
+
+    except pymssql.Error as e:
+        print("Error occurred when reserving an appointment! Please try again")
+        print("Db-Error:", e)
+        quit()
+    except ValueError:
+        print("And error occured while reserving an appointment!")
+        return
+    except Exception as e:
+        print("Error occurred when reserving an appointment. Please try again!")
+        print("Error:", e)
+        return
+    return
 
 def upload_availability(tokens):
     #  upload_availability <date>
@@ -355,12 +412,14 @@ def show_appointments(tokens):
 def logout(tokens):
     global current_caregiver
     global current_patient
+    global login_profile_name
     if current_caregiver is None and current_patient is None:
         print("Please login first!")
         return
     try:
         current_patient = None
         current_caregiver = None
+        login_profile_name = None
         print("Successfully logged out!")
         return None
 

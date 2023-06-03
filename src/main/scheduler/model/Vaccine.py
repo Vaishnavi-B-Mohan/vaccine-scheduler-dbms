@@ -5,9 +5,12 @@ import pymssql
 
 
 class Vaccine:
-    def __init__(self, vaccine_name, available_doses):
+    def __init__(self, vaccine_name, available_doses=None):
         self.vaccine_name = vaccine_name
-        self.available_doses = available_doses
+        if available_doses is not None:
+            self.available_doses = available_doses
+        else:
+            self.available_doses = self.get_available_doses()
 
     # getters
     def get(self):
@@ -32,7 +35,21 @@ class Vaccine:
         return self.vaccine_name
 
     def get_available_doses(self):
-        return self.available_doses
+        cm = ConnectionManager()
+        conn = cm.create_connection()
+        cursor = conn.cursor()
+        available_doses = 0
+        doses_query = "SELECT Doses FROM Vaccines WHERE Name = %s"
+        try:
+            cursor.execute(doses_query, self.vaccine_name)
+            for row in cursor:
+                available_doses = row[0]
+        except pymssql.Error:
+            print("Error occurred in getting vaccine doses")
+            raise
+        finally:
+            cm.close_connection()
+        return available_doses
 
     def save_to_db(self):
         if self.available_doses is None or self.available_doses <= 0:
