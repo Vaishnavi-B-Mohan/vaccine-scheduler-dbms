@@ -334,9 +334,9 @@ def start():
     stop = False
     print()
     print(" *** Please enter one of the following commands *** ")
-    print("> create_patient <username> <password>")  # //TODO: implement create_patient (Part 1)
+    print("> create_patient <username> <password>")  # //
     print("> create_caregiver <username> <password>")
-    print("> login_patient <username> <password>")  # // TODO: implement login_patient (Part 1)
+    print("> login_patient <username> <password>")  # //
     print("> login_caregiver <username> <password>")
     print("> search_caregiver_schedule <date>")  # // TODO: implement search_caregiver_schedule (Part 2)
     print("> reserve <date> <vaccine>")  # // TODO: implement reserve (Part 2)
