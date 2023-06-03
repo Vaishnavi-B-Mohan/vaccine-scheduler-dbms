@@ -55,3 +55,4 @@ class Appointments:
             raise
         finally:
             cm.close_connection()
+            return

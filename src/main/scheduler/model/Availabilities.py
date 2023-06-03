@@ -35,6 +35,7 @@ def check_availability(d):
         cm.close_connection()
     return row_count
 
+
 def get_available_caregiver(d, vaccine):
     cm = ConnectionManager()
     conn = cm.create_connection()
