@@ -353,10 +353,22 @@ def show_appointments(tokens):
 
 
 def logout(tokens):
-    """
-    TODO: Part 2
-    """
-    pass
+    global current_caregiver
+    global current_patient
+    if current_caregiver is None and current_patient is None:
+        print("Please login first!")
+        return
+    try:
+        current_patient = None
+        current_caregiver = None
+        print("Successfully logged out!")
+        return None
+
+    except Exception as e:
+        print("Logout failed! Please try again")
+        print("Error:", e)
+        return None
+
 
 
 def start():
