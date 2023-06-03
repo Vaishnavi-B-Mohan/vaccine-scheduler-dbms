@@ -25,9 +25,6 @@ def check_availability(d):
             if vaccine_doses > 0:
                 print(cg_name, vaccine_name, vaccine_doses)
                 row_count += 1
-            else:
-                print("Sorry! No vaccine available for this date")
-        cm.close_connection()
 
     except pymssql.Error as e:
         raise e

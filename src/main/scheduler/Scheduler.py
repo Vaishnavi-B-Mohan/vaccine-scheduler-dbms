@@ -3,6 +3,8 @@ from model.Caregiver import Caregiver
 from model.Patient import Patient
 from model.Appointments import Appointments
 from model.Appointments import createAppointmentID
+from model.Appointments import see_cg_appointments
+from model.Appointments import see_patient_appointments
 from model.Availabilities import check_availability
 from model.Availabilities import get_available_caregiver
 from util.Util import Util
@@ -240,11 +242,9 @@ def search_caregiver_schedule(tokens):
         quit()
     except ValueError:
         print("Please enter a valid date in MM-DD-YYYY format!")
-        return
     except Exception as e:
         print("Error occurred when searching for caregiver schedules. Please try again!")
         print("Error:", e)
-        return
     return
 
 
@@ -403,10 +403,28 @@ def add_doses(tokens):
 
 
 def show_appointments(tokens):
-    '''
-    TODO: Part 2
-    '''
-    pass
+    global login_profile_name
+    #  check 1: check if a user is logged in
+    if current_caregiver is None and current_patient is None:
+        print("Please login first!")
+        return
+
+    try:
+        if current_caregiver is not None:
+            see_cg_appointments(login_profile_name)
+        elif current_patient is not None:
+            see_patient_appointments(login_profile_name)
+
+    except pymssql.Error as e:
+        print("Failed to show appointments!")
+        print("Db-Error:", e)
+        quit()
+    except ValueError:
+        print("Error! Please try again")
+    except Exception as e:
+        print("Error occurred when showing appointments. Please try again!")
+        print("Error:", e)
+    return
 
 
 def logout(tokens):

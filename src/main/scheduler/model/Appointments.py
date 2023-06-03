@@ -23,22 +23,24 @@ class Appointments:
 
         get_vaccine = "SELECT AppointmentID, PatientID, CaregiverID, VaccineName, Time FROM Appointments WHERE AppointmentID = %s"
         try:
-            row = cursor.execute(get_vaccine, self.appointmentID)
+            cursor.execute(get_vaccine, self.appointmentID)
             for row in cursor:
                 self.patient = row['PatientID']
                 self.caregiver = row['CaregiverID']
                 self.vaccine = row['VaccineName']
                 self.d = row['Time']
-                return self
         except pymssql.Error:
             # print("Error occurred when getting Appointment")
             raise
+            return
         finally:
             cm.close_connection()
-        return None
+            return self
+
 
     def get_appointmentID(self):
         return self.appointmentID
+
 
     def save_to_db(self):
         cm = ConnectionManager()
@@ -56,3 +58,49 @@ class Appointments:
         finally:
             cm.close_connection()
             return
+
+def see_cg_appointments(user):
+    cm = ConnectionManager()
+    conn = cm.create_connection()
+    cursor = conn.cursor()
+
+    get_appointments = "SELECT AppointmentID, VaccineName, Time, PatientID FROM Appointments WHERE CaregiverID = %s ORDER BY AppointmentID ASC"
+
+    try:
+        cursor.execute(get_appointments, user)
+        for row in cursor:
+            appointmentID = row[0]
+            vaccine_name = row[1]
+            d = row[2]
+            patient_name = row[3]
+            print(appointmentID, vaccine_name, d, patient_name)
+
+    except pymssql.Error:
+        print("Error occurred when getting Appointments")
+        raise
+    finally:
+        cm.close_connection()
+        return None
+
+def see_patient_appointments(user):
+    cm = ConnectionManager()
+    conn = cm.create_connection()
+    cursor = conn.cursor()
+
+    get_appointments = "SELECT AppointmentID, VaccineName, Time, CaregiverID FROM Appointments WHERE PatientID = %s"
+
+    try:
+        cursor.execute(get_appointments, user)
+        for row in cursor:
+            appointmentID = row[0]
+            vaccine_name = row[1]
+            d = row[2]
+            caregiver_name = row[3]
+            print(appointmentID, vaccine_name, d, caregiver_name)
+
+    except pymssql.Error:
+        print("Error occurred when getting Appointments")
+        raise
+    finally:
+        cm.close_connection()
+        return None
