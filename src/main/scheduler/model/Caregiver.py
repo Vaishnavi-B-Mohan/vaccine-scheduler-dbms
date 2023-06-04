@@ -81,26 +81,26 @@ class Caregiver:
                 existing_appointment = row[0]
                 if existing_appointment is not None:
                     print("There is an active appointment already booked at this time. Please cancel this and try again. AppointmentID: ", row[0])
-                    return
+                    return 0
             # check 2: Check if the availability already exists for the user in the availability table. If so, notify the user about it already existing
             cursor.execute(chk_existing_availability, (self.username, d))
             for row in cursor:
                 existing_availability = row[0]
                 if existing_availability != 0:
                     print("Availability has already been added for this date.")
-                    return
+                    return 0
 
             # add availability to the database
             cursor.execute(add_availability, (d, self.username))
             # you must call commit() to persist your data if you don't set autocommit to True
             conn.commit()
-            print("Availability uploaded!")
+            #print("Availability uploaded!")
+            return 1
         except pymssql.Error:
             # print("Error occurred when updating caregiver availability")
             raise
         finally:
             cm.close_connection()
-            return
 
     def remove_availability(self, d):
         cm = ConnectionManager()

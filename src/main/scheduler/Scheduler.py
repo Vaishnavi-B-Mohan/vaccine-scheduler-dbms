@@ -2,11 +2,7 @@ from model.Vaccine import Vaccine
 from model.Caregiver import Caregiver
 from model.Patient import Patient
 from model.Appointments import Appointments
-from model.Appointments import createAppointmentID
-from model.Appointments import see_cg_appointments
-from model.Appointments import see_patient_appointments
 from model.Availabilities import check_availability
-from model.Availabilities import get_available_caregiver
 from util.Util import Util
 from db.ConnectionManager import ConnectionManager
 import pymssql
@@ -273,23 +269,11 @@ def reserve(tokens):
 
     try:
         d = datetime.datetime(year, month, day)
-        availability = check_availability(d)
-        if availability <= 0:
-            print("Sorry no caregiver is available!")
-            return
-        available_doses = Vaccine(vaccinename).get_available_doses()
-        if available_doses <= 0:
-            print("Sorry not enough available doses!")
-            return
-
         patient_name = login_profile_name
-        cg_name = get_available_caregiver(d, vaccinename)
-        appointmentID = createAppointmentID()
-        Appointments(appointmentID, patient_name, cg_name, vaccinename, d).save_to_db()
-        Vaccine(vaccinename).decrease_available_doses(1)  # decreasing the available doses by 1 after reservation
-        Caregiver(cg_name).remove_availability(d)  # remove caregiver availability from the Availabilities table after reservation
-        print("Your appointment has been reserved")
-        print("Appointment ID: ", appointmentID, "Caregiver username: ", cg_name)
+        appointment = Appointments().create_appointment(patient_name, vaccinename, d)
+        if len(appointment) != 0:
+            print("Your appointment has been reserved successfully!")
+            print("Appointment ID: ", appointment[0], "Caregiver username: ", appointment[1])
 
     except pymssql.Error as e:
         print("Error occurred when reserving an appointment! Please try again")
@@ -297,11 +281,10 @@ def reserve(tokens):
         quit()
     except ValueError:
         print("And error occured while reserving an appointment!")
-        return
     except Exception as e:
         print("Error occurred when reserving an appointment. Please try again!")
         print("Error:", e)
-        return
+
     return
 
 
@@ -326,7 +309,11 @@ def upload_availability(tokens):
     year = int(date_tokens[2])
     try:
         d = datetime.datetime(year, month, day)
-        current_caregiver.upload_availability(d)
+        ret_code = current_caregiver.upload_availability(d)
+        if ret_code == 1:
+            print("Availability uploaded!")
+        else:
+            print("Upload Availability Failed")
     except pymssql.Error as e:
         print("Upload Availability Failed")
         print("Db-Error:", e)
@@ -340,12 +327,29 @@ def upload_availability(tokens):
         return
 
 
-def cancel(tokens):
-    """
-    TODO: Extra Credit
-    """
-    pass
+def cancel_appointment(tokens):
+    #  check 1: check if a user is logged in
+    if current_caregiver is None and current_patient is None:
+        print("Please login first!")
+        return
 
+    # check 2: the length for tokens need to be exactly 3 to include all information (with the operation name)
+    if len(tokens) != 2:
+        print("Input length is incorrect. Please try again!")
+        return
+
+    try:
+        appointmentID = tokens[1]
+        ret_code = Appointments().cancel_appointment(appointmentID)
+        if ret_code == 1:
+            print("Your appointment has been canceled!")
+        else:
+            print("An error occured in canceling the appointment. Please try again")
+
+    except Exception as e:
+        print("An error occured in canceling the appointment. Please try again")
+        print("Error:", e)
+    return
 
 def add_doses(tokens):
     #  add_doses <vaccine> <number>
@@ -412,9 +416,9 @@ def show_appointments(tokens):
 
     try:
         if current_caregiver is not None:
-            see_cg_appointments(login_profile_name)
+            Appointments().see_cg_appointments(login_profile_name)
         elif current_patient is not None:
-            see_patient_appointments(login_profile_name)
+            Appointments().see_patient_appointments(login_profile_name)
 
     except pymssql.Error as e:
         print("Failed to show appointments!")
@@ -457,13 +461,13 @@ def start():
     print("> create_caregiver <username> <password>")
     print("> login_patient <username> <password>")  # //
     print("> login_caregiver <username> <password>")
-    print("> search_caregiver_schedule <date>")  # // TODO: implement search_caregiver_schedule (Part 2)
-    print("> reserve <date> <vaccine>")  # // TODO: implement reserve (Part 2)
+    print("> search_caregiver_schedule <date>")  # //
+    print("> reserve <date> <vaccine>")  # //
     print("> upload_availability <date>")
-    print("> cancel <appointment_id>")  # // TODO: implement cancel (extra credit)
+    print("> cancel_appointment <appointment_id>")  # //
     print("> add_doses <vaccine> <number>")
-    print("> show_appointments")  # // TODO: implement show_appointments (Part 2)
-    print("> logout")  # // TODO: implement logout (Part 2)
+    print("> show_appointments")  # //
+    print("> logout")  # //
     print("> Quit")
     print()
     while not stop:
@@ -496,8 +500,8 @@ def start():
             reserve(tokens)
         elif operation == "upload_availability":
             upload_availability(tokens)
-        elif operation == cancel:
-            cancel(tokens)
+        elif operation == "cancel_appointment":
+            cancel_appointment(tokens)
         elif operation == "add_doses":
             add_doses(tokens)
         elif operation == "show_appointments":
