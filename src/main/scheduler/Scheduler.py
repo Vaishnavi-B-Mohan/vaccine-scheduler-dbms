@@ -327,7 +327,7 @@ def upload_availability(tokens):
         return
 
 
-def cancel_appointment(tokens):
+def cancel(tokens):
     #  check 1: check if a user is logged in
     if current_caregiver is None and current_patient is None:
         print("Please login first!")
@@ -464,7 +464,7 @@ def start():
     print("> search_caregiver_schedule <date>")  # //
     print("> reserve <date> <vaccine>")  # //
     print("> upload_availability <date>")
-    print("> cancel_appointment <appointment_id>")  # //
+    print("> cancel <appointment_id>")  # //
     print("> add_doses <vaccine> <number>")
     print("> show_appointments")  # //
     print("> logout")  # //
@@ -500,8 +500,8 @@ def start():
             reserve(tokens)
         elif operation == "upload_availability":
             upload_availability(tokens)
-        elif operation == "cancel_appointment":
-            cancel_appointment(tokens)
+        elif operation == "cancel":
+            cancel(tokens)
         elif operation == "add_doses":
             add_doses(tokens)
         elif operation == "show_appointments":
