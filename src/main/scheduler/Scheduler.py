@@ -303,6 +303,7 @@ def reserve(tokens):
         return
     return
 
+
 def upload_availability(tokens):
     #  upload_availability <date>
     #  check 1: check if the current logged-in user is a caregiver
@@ -331,12 +332,11 @@ def upload_availability(tokens):
         quit()
     except ValueError:
         print("Please enter a valid date in MM-DD-YYYY format!")
-        return
     except Exception as e:
         print("Error occurred when uploading availability")
         print("Error:", e)
+    finally:
         return
-    print("Availability uploaded!")
 
 
 def cancel(tokens):
