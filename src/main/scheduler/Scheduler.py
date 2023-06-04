@@ -255,6 +255,7 @@ def reserve(tokens):
     global login_profile_name
     if current_caregiver is not None:
         print("Please login as a patient!")
+        return
     if current_patient is None and current_caregiver is None:
         print("Please login first!")
         return
