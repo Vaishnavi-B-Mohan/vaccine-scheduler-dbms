@@ -7,6 +7,7 @@ from util.Util import Util
 from db.ConnectionManager import ConnectionManager
 import pymssql
 import datetime
+import re
 
 
 '''
@@ -22,6 +23,7 @@ login_profile_name = None
 
 
 def create_patient(tokens):
+    print("Password should contain atleast 8 characters, both cases, letters and numbers, and atleast one special character from ! @ # ?")
     # create_patient <username> <password>
     # check 1: the length for tokens need to be exactly 3 to include all information (with the operation name)
     if len(tokens) != 3:
@@ -33,6 +35,21 @@ def create_patient(tokens):
     # check 2: check if the username has been taken already
     if username_exists_patient(username):
         print("Username taken, try again!")
+        return
+
+    # check 3: Password handling for strong passwords
+    ret_code = password_handling(password)
+    if ret_code == 1:
+        print("Failed to create user. Password length has to be atleast 8 characters")
+        return
+    elif ret_code == 2:
+        print("Failed to create user. Password has to contain both upper and lower cases")
+        return
+    elif ret_code == 3:
+        print("Failed to create user. Password has to contain both letters and numbers")
+        return
+    elif ret_code == 4:
+        print("Failed to create user. Password has to contain atleast one special character from ! @ # ?")
         return
 
     salt = Util.generate_salt()
@@ -79,6 +96,8 @@ def username_exists_patient(username):
 
 
 def create_caregiver(tokens):
+    print("Password should contain atleast 8 characters, both cases, letters and numbers, and atleast one special character from ! @ # ?")
+
     # create_caregiver <username> <password>
     # check 1: the length for tokens need to be exactly 3 to include all information (with the operation name)
     if len(tokens) != 3:
@@ -90,6 +109,21 @@ def create_caregiver(tokens):
     # check 2: check if the username has been taken already
     if username_exists_caregiver(username):
         print("Username taken, try again!")
+        return
+
+    # check 3: Password handling for strong passwords
+    ret_code = password_handling(password)
+    if ret_code == 1:
+        print("Failed to create user. Password length has to be atleast 8 characters")
+        return
+    elif ret_code == 2:
+        print("Failed to create user. Password has to contain both upper and lower cases")
+        return
+    elif ret_code == 3:
+        print("Failed to create user. Password has to contain both letters and numbers")
+        return
+    elif ret_code == 4:
+        print("Failed to create user. Password has to contain atleast one special character from ! @ # ?")
         return
 
     salt = Util.generate_salt()
@@ -111,6 +145,26 @@ def create_caregiver(tokens):
         return
     print("Created user ", username)
 
+
+def password_handling(password):
+    # fail conditions:
+    # 1: Password length is less than 8 characters
+    # 2: Password does not contain both cases
+    # 3: Password does not contain a mixture of letters and numbers
+    # 4: Password does not contain any special character
+
+    regex = re.compile('[!@#?]')
+    if len(password) < 8:
+        print("Password must have atleast 8 characters. Please try again!")
+        return 1
+    if password.isupper() or password.islower():
+        return 2
+    if password.isalpha() or password.isnumeric():
+        return 3
+    if regex.search(password) is None:
+        return 4
+    else:
+        return 0
 
 def username_exists_caregiver(username):
     cm = ConnectionManager()
@@ -480,12 +534,13 @@ def start():
             print("Please try again!")
             break
 
-        response = response.lower()
+        #response = response.lower()
         tokens = response.split(" ")
         if len(tokens) == 0:
             ValueError("Please try again!")
             continue
         operation = tokens[0]
+        operation = operation.lower()
         if operation == "create_patient":
             create_patient(tokens)
         elif operation == "create_caregiver":
